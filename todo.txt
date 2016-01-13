@@ -1,0 +1,67 @@
+Need an "undo" function in pybook for in case when pybook succeeds but later processes in crypt machine fails
+
+Need unit test for partial fill ( for multiple orders in level) 
+
+Cryptmachine - We need submit order because it can turn into take or craeate
+    current way of convertin from price/qty input to buying qty/selling qty is retarded.
+    We can use consistent price/qty notation for submit order .. create_quote and take_quote    
+    needs to be converted to price/qty notation.
+
+Need to sort levels by timestamp, so priority will be given to earlier orders, AS OF NOW TIME PRIORITY
+IS NOT CONSIDERED !!! 
+    - need to convert level dict to level linked list 
+   
+
+When submitting, need to take into consideration when some parts fill as take quotes 
+but need to make create quote too if there is not enough to take 
+
+Should we take into account cases where partial fills are not allowed?
+
+Implement options unimplemneted in pybook
+
+
+
+WORKSPACE-----------------------------------
+
+Crypto buying LTC
+crypto buying qty 100 
+Crypto selling BTC
+crypto selling qty 50
+selling 50 btc for 2 ltc each 
+or buying 100 ltc for .5 btc each
+
+in the book LTC intrument BTC unit
+
+price per unit 1/2 (50/100) 
+qty 100 (if ask this is quantity selling , if bid this is quantiy buying)
+ask/bid - bid (bidding for LTC)
+
+Crypto buying BTC
+crypto buying qty 100 
+Crypto selling LTC
+crypto selling qty 50
+Selling 50 LTC for 100 BTC
+or selling 50 ltc at .5 btc each
+
+
+in the book LTC intrument BTC unit
+
+price per unit 1/2 (50/100) LTC price per BTC 
+    (5000 satoshi lite / 1000 satoshi) *( 1 LTC / 10 satoshi lite) * (10 satoshi / 1 BTC)  
+qty 50 (if ask this is quantity selling , if bid this is quantiy buying)
+ask/bid - ask (asking for LTC)
+
+
+
+so 
+
+ask if crypto_buying == unit and crypto_selling == instrument
+
+bid if crypto_buying == instrument and cyrpto_selling == unit
+
+qty  = crytpo_buying if ask, crypto_selling if bid
+
+price = crypt_selling_qty/ crypto_buying_qty if ask crypto_buying_qty / crypto_selling_qty if bid 
+    
+
+
