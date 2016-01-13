@@ -164,7 +164,7 @@ class Side(object):
 
     def get_num_orders_at_level(self,level):
         if level < 0:
-            logging.critical('Level cannot be less than zero for get_num_orders_at_level()') 
+            self.logger.critical('Level cannot be less than zero for get_num_orders_at_level()') 
             raise Exception('Level cannot be less than zero for get num_orders_at_level()')
         return len(self.circ_array[self.get_index_at_level(level)])
 
@@ -369,6 +369,7 @@ class Side(object):
                 self.top_index_price = price
             # we can insert
             else:
+                print('insert level',insert_level)
                 self.circ_array[self.get_index_at_level(insert_level)].insert(order)
                 if insert_level < 0:
                     self.top_index          = self.get_index_at_level(insert_level)
@@ -456,12 +457,16 @@ class Book(object):
 
         self.ask_side   = Side(is_ask=True,init_size=self.init_size,level_increment=self.level_increment,deep_level_limit=deep_level_limit)
         self.bid_side   = Side(is_ask=False,init_size=self.init_size,level_increment=self.level_increment,deep_level_limit=deep_level_limit)
-        # setup logger
-        time_string = time.strftime('%Y-%m-%d-%H-%M-%S')
-        logging.basicConfig(
-                filename='{}_{}_pybook_{}.pylog'.format(instrument,unit,time_string),
-                level=logging.DEBUG,format='%(asctime)s %(levelname)s %(message)s')
 
+        # setup logger
+
+        self.logger = logging.getLogger('pybook')
+        self.logger.setLevel(logging.DEBUG)
+        time_string = time.strftime('%Y-%m-%d-%H-%M-%S')
+        file_handler = logging.FileHandler('{}_{}_pybook_{}.pylog'.format(instrument,unit,time_string))
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        file_handler.setFormatter(formatter) 
+        self.logger.addHandler(file_handler)
 
     @classmethod
     def from_pybook_config(cls,instrument,unit):
@@ -495,7 +500,7 @@ class Book(object):
     # process and return message
     def process_msg(self,msg):
         msg_list=msg.split()
-        logging.info('processing msg: '+msg)
+        self.logger.info('processing msg: '+msg)
         if len(msg_list) == 0:
             out_json['success']=0
             out_json['result']='invalid_command'
@@ -644,20 +649,20 @@ class Book(object):
                     result=opposite_side.delete(order_id)                    
                     if result[0]==False:
                         msg='Failed to delete order {}: {}'.format(order_id,result[1])
-                        logging.critical(msg)
+                        self.logger.critical(msg)
                         return(False,msg)
                     else:
                         msg='Deleted order_id {}'.format(order_id)
-                        logging.info(msg)
+                        self.logger.info(msg)
                 else:
                     result=opposite_side.reduce(order_id,taken_qty)
                     if result[0]==False:       
                         msg='Failed to reduce an order: '+result[1]
-                        logging.critical(msg)
+                        self.logger.critical(msg)
                         return(False,msg)
                     else:
                         msg='Reduced order_id {} by {}'.format(order_id,taken_qty)
-                        logging.info(msg)
+                        self.logger.info(msg)
 
         if total_matched_qty < order.qty:
  
@@ -666,10 +671,10 @@ class Book(object):
             if result[0]==True:
                 out_dict['created'].append({'order_id':order.order_id,'qty':order.qty})
                 msg='Created order, order id:{} qty:{} price:{} is_ask:{}'.format(order.order_id,order.qty,order.price,order.is_ask) 
-                logging.info(msg)
+                self.logger.info(msg)
             else:
                 msg='Failed to insert order({}): {}'.format(str(order),result[1])
-                logging.critical(msg) 
+                self.logger.critical(msg) 
                 return(False,msg) 
 
         
