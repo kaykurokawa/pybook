@@ -20,6 +20,7 @@ class Order(object):
 
 class DeepOrders(object):
     def __init__(self,is_ask):
+        # dict where key is (price,order_id) and value is Order 
         self.deep_orders={}
         self.is_ask=is_ask
     def __iter__(self):
@@ -242,15 +243,19 @@ class Side(object):
                
         return matching_orders_out
 
-    # reduce order qty,
+    # reduce order qty. Remove order if qty is zero 
     def reduce(self,order_id,reduce_qty):
         if order_id not in self.all_orders:
             return (False, 'order_id not found')
-        if reduce_qty >= self.all_orders[order_id].qty:
-            return (False, 'cannot reduce more than available qty')
 
-        self.all_orders[order_id].qty-=reduce_qty
-        return (True,'')
+        if reduce_qty > self.all_orders[order_id].qty:
+            return (False, 'cannot reduce more than  available qty')
+        elif reduce_qty < self.all_orders[order_id].qty:
+            self.all_orders[order_id].qty-=reduce_qty
+            return (True,'')
+        else: # qty is equal
+            self.delete(order_id) 
+            return (True,'')
 
     # delete order, order must contain order_id and price 
     def delete(self,order_id):
@@ -292,7 +297,7 @@ class Side(object):
                     break
             if next_full_level == None: #there is no more order in circ_array 
                 self.top_index_price = self.deep_orders.get_best_price()
-                self.num_levels=0
+                self.num_levels = 0
 
             else:
                 new_top_index=self.get_index_at_level(next_full_level)
@@ -369,14 +374,13 @@ class Side(object):
                 self.top_index_price = price
             # we can insert
             else:
-                print('insert level',insert_level)
                 self.circ_array[self.get_index_at_level(insert_level)].insert(order)
                 if insert_level < 0:
                     self.top_index          = self.get_index_at_level(insert_level)
                     self.top_index_price    = price
                     self.num_levels         += abs(insert_level)
                 else:
-                    self.num_levels         = max(self.num_levels,insert_level) 
+                    self.num_levels         = max(self.num_levels,insert_level+1) 
 
 
     def _max_level_on_circ_array(self):
@@ -403,6 +407,7 @@ class Side(object):
         
         return (self.top_index+level) % len(self.circ_array)
 
+    # get price at level, if level does not exist , return None
     def get_price_at_level(self,level):
         if not self.is_ask: 
             level=-level
@@ -461,7 +466,7 @@ class Book(object):
         # setup logger
 
         self.logger = logging.getLogger('pybook')
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.WARN)
         time_string = time.strftime('%Y-%m-%d-%H-%M-%S')
         file_handler = logging.FileHandler('{}_{}_pybook_{}.pylog'.format(instrument,unit,time_string))
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
@@ -597,6 +602,22 @@ class Book(object):
                            deep_level_limit=self.deep_level_limit)
         self.bid_side=Side(is_ask=False,init_size=self.init_size,level_increment=self.level_increment,
                            deep_level_limit=self.deep_level_limit)
+
+    # reduce order
+    def reduce_order(self,order_id,reduce_qty):
+        order_id_in_ask=order_id in self.ask_side.all_orders
+        order_id_in_bid=order_id in self.bid_side.all_orders
+        if order_id_in_ask and order_id_in_bid:
+            return (False,'order_id {} in both ask side and bid side'.format(order_id))
+        if not (order_id_in_ask or order_id_in_bid):
+            return (False,'order_id {} not found in either bid or ask'.format(order_id))
+
+        if order_id_in_ask:
+            side = self.ask_side
+        else:
+            side = self.bid_side
+        return side.reduce(order_id,reduce_qty)
+      
 
     # remove order 
     def delete_order(self,order_id):
