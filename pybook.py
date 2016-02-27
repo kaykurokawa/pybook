@@ -283,7 +283,7 @@ class Side(object):
                 self.num_levels=0
             return (True,'')
         else:
-            return (False,'order_id found in all_orders but not anywhere else, state:\n{}'.format(str(self)))
+            return (False,'order_id found in all_orders but not anywhere else')
 
         # no more order in level and it is top of book
         # need to update the top of book 
