@@ -1,2 +1,5 @@
 *.pylog
 *.pyc
+build/
+dist/
+pybook.egg-info/
