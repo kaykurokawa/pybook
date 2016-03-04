@@ -54,17 +54,7 @@ class DeepOrders(object):
         else: # return by highest price first
             return sorted(unsorted_list, key=lambda x: (-x.price, x.creation_time))
 
-# if using dict 
-# insertion and deletion is 0(1) 
-# sorting (necessary for matching) is 0(nlogn) : NEED TO DO! 
-#
-# if we use linked list
-# insertion (1)  and deletion is O(n) ( insertion is O(1) since all orders will be inserted in order of creation time..)
-# sorting is O(1) 
-#
-# if we use heap 
-# insertion and deletion is O(logn)
-# sorting is O(1) 
+
 class Level(object):
     def __init__(self):
         self.level=OrderedDict()
@@ -87,7 +77,8 @@ class Level(object):
     def insert(self,order):
         self.level[order.order_id]=order
 
-    # This must return orders in order of priority !!
+    # note that this will return orders sorted by insertion time, not
+    # orders.creation_time 
     def values(self):         
         return self.level.values()
 
@@ -205,7 +196,7 @@ class Side(object):
             
         max_level   = min(self._max_level_on_circ_array(), self.get_level_at_price(order.price))
         matched_qty = 0
-        # first check circ_arr3y
+        # first check circ_array
         for i in range(0,max_level+1):
             orders_at_level=self.get_orders_at_level(i)
             for cur_order in orders_at_level:
